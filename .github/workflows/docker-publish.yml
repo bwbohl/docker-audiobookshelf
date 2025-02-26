@@ -74,12 +74,12 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
-          username: ${{ DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Set DOCKERHUB_IMAGE_NAME
       - name: Set DOCKERHUB_IMAGE_NAME
-        if: github.repository_owner == $DOCKERHUB_USERNAME
+        if: github.repository_owner ==  ${{ vars.DOCKERHUB_USERNAME }}
         run: echo "DOCKERHUB_IMAGE_NAME=$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" >> $GITHUB_ENV
 
       # Extract metadata (tags, labels) for Docker
@@ -90,7 +90,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
           flavor: |
             latest=${{ github.ref == 'refs/heads/main' }}
 
