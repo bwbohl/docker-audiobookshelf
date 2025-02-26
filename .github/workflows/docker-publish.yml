@@ -21,8 +21,8 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
   # github repository name as <repo>
-  #  might even be set through echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" if usernames on GitHub and DockerHub are identical
-  DOCKERHUB_IMAGE_NAME: sencha-cmd
+  # might even be set through echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" if usernames on GitHub and DockerHub are identical
+  DOCKERHUB_IMAGE_NAME:
   # boolean whether to push or not
   PUSH: false
 
@@ -74,8 +74,13 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
-          username: ${{ secrets.BWBOHL_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.BWBOHL_DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Set DOCKERHUB_IMAGE_NAME
+      - name: Set DOCKERHUB_IMAGE_NAME
+        if: github.repository_owner == secrets.DOCKERHUB_USERNAME
+        run: echo "DOCKERHUB_IMAGE_NAME=$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" >> $GITHUB_ENV
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
@@ -85,7 +90,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ secrets.BWBOHL_DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
           flavor: |
             latest=${{ github.ref == 'refs/heads/main' }}
 
