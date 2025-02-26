@@ -22,7 +22,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   # github repository name as <repo>
   # might even be set through echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" if usernames on GitHub and DockerHub are identical
-  DOCKERHUB_IMAGE_NAME: ""
+  # DOCKERHUB_IMAGE_NAME: ${{ null }}
   # boolean whether to push or not
   PUSH: false
 
@@ -30,6 +30,17 @@ env:
 
 
 jobs:
+  #init:
+  #  runs-on: ubuntu-latest
+  #  permissions:
+  #    contents: read
+  #    packages: write
+  #    # This is used to complete the identity challenge
+  #    # with sigstore/fulcio when running outside of PRs.
+  #    id-token: write
+  #  steps:
+    
+
   build:
 
     runs-on: ubuntu-latest
@@ -41,6 +52,18 @@ jobs:
       id-token: write
 
     steps:
+
+    # Set DOCKERHUB_IMAGE_NAME
+      - name: Set DOCKERHUB_IMAGE_NAME
+        if: github.repository_owner ==  ${{ vars.DOCKERHUB_USERNAME }}
+        run: echo DOCKERHUB_IMAGE_NAME=$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e 's/docker-//') >> $GITHUB_ENV
+
+      - name: Echo DOCKERHUB_IMAGE_NAME
+        run: echo "$env.DOCKERHUB_IMAGE_NAME"
+        
+      - name: Echo variables
+        run: env
+    
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -74,13 +97,8 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # Set DOCKERHUB_IMAGE_NAME
-      - name: Set DOCKERHUB_IMAGE_NAME
-        if: github.repository_owner == ${{ secrets.DOCKERHUB_USERNAME }}
-        run: echo "DOCKERHUB_IMAGE_NAME=$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//" >> $GITHUB_ENV
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
@@ -90,7 +108,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_IMAGE_NAME }}
           flavor: |
             latest=${{ github.ref == 'refs/heads/main' }}
 
