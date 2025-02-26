@@ -1,4 +1,4 @@
-FROM ghcr.io/advplyr/audiobookshelf:latest
+FROM ghcr.io/advplyr/audiobookshelf:2.19.5
 
 # about this image
 LABEL org.opencontainers.image.title="audiobookshelf – ffmpeg"
